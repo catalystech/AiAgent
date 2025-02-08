@@ -1,0 +1,380 @@
+{
+  "name": "Content Extractor",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8a155ef6-eb40-4eeb-b304-d1c31451681d",
+              "name": "=file_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "5ef4b64c-16f6-440b-ad5d-4b5680b008c3",
+              "name": "folder_id",
+              "value": "{{ $json.parents[0] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        180,
+        100
+      ],
+      "id": "a47fd4de-f5a1-460a-99db-14d53a459a1d",
+      "name": "Set File ID"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1mpFUDzfok0-9n3N9-D0q2cN7RgWAuKtY",
+          "mode": "list",
+          "cachedResultName": "Guidlines",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1mpFUDzfok0-9n3N9-D0q2cN7RgWAuKtY"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        0
+      ],
+      "id": "496dc88b-7cea-494f-962b-1aaa18cba9a0",
+      "name": "File Created",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "UGxgq6gc5NN2DRSR",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1mpFUDzfok0-9n3N9-D0q2cN7RgWAuKtY",
+          "mode": "list",
+          "cachedResultName": "Guidlines",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1mpFUDzfok0-9n3N9-D0q2cN7RgWAuKtY"
+        },
+        "event": "fileUpdated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        240
+      ],
+      "id": "2faa4b6b-6d5a-46c1-b505-dca358886ff7",
+      "name": "FIle Updated",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "UGxgq6gc5NN2DRSR",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "code": {
+          "execute": {
+            "code": "const { QdrantVectorStore } = require(\"@langchain/qdrant\");\nconst { OllamaEmbeddings } = require(\"@langchain/community/embeddings/ollama\");\n\nconst embeddings = new OllamaEmbeddings({\n  model: \"nomic-embed-text\",\n  baseUrl: \"http://ollama:11434\"\n});\n\nconst vectorStore = await QdrantVectorStore.fromExistingCollection(\n  embeddings,\n  {\n    url: \"http://host.docker.internal:6333\",\n    collectionName: \"documents\",\n     apiKey: \"vI2WFCzicHvaGSdk9yJAK\",\n  }\n);\n\nconst fileIdToDelete = this.getInputData()[0].json.file_id;\n\nconst filter = {\n        must: [\n            {\n                key: \"metadata.file_id\",\n                match: {\n                    value: fileIdToDelete,\n                },\n            },\n        ],\n    }\n\n// const results = await vectorStore.similaritySearch(\"this\", 10, filter);\n// const idsToDelete = results.map((doc) => doc.id);\n\n// NOT IMPLEMENTED!\n// await vectorStore.delete({ ids: idsToDelete });\n\nvectorStore.client.delete(\"documents\", {\n  filter\n});\n\nreturn [ {json: { file_id: fileIdToDelete } } ];\n"
+          }
+        },
+        "inputs": {
+          "input": [
+            {
+              "type": "main",
+              "required": true
+            }
+          ]
+        },
+        "outputs": {
+          "output": [
+            {
+              "type": "main"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.code",
+      "typeVersion": 1,
+      "position": [
+        400,
+        100
+      ],
+      "id": "ed60f8ac-4f73-4343-9545-7dc33fa1df41",
+      "name": "Clear Old Vectors"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        840,
+        100
+      ],
+      "id": "4230c293-c5ad-4736-827d-18a0690933fb",
+      "name": "Extract Document Text",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Set File ID').item.json.file_id }}",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "text/plain"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        620,
+        100
+      ],
+      "id": "f8923370-f646-49c6-8a65-7acdd9f79ff2",
+      "name": "Download File",
+      "executeOnce": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "UGxgq6gc5NN2DRSR",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "nomic-embed-text:latest"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "typeVersion": 1,
+      "position": [
+        980,
+        300
+      ],
+      "id": "000f0028-206b-4a57-affb-165e57855269",
+      "name": "Embeddings Ollama",
+      "credentials": {
+        "ollamaApi": {
+          "id": "29KDpk8i8CZiVq84",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1,
+      "position": [
+        1060,
+        100
+      ],
+      "id": "1c2d026f-85d5-46f0-949e-0354b708b16c",
+      "name": "Guidelines Store",
+      "credentials": {
+        "qdrantApi": {
+          "id": "zGqKtHVFwFN2U6Bu",
+          "name": "QdrantApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "file_id",
+                "value": "={{ $('Set File ID').item.json.file_id }}"
+              },
+              {
+                "name": "folder_id",
+                "value": "={{ $('Set File ID').item.json.folder_id }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        320
+      ],
+      "id": "82388e09-6743-4e60-a934-040a164f5fa0",
+      "name": "Data Loader"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        540
+      ],
+      "id": "cd8f9649-1700-4bdb-83e9-7c8321d3f324",
+      "name": "Character Text Splitter"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "File Created": {
+      "main": [
+        [
+          {
+            "node": "Set File ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FIle Updated": {
+      "main": [
+        [
+          {
+            "node": "Set File ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set File ID": {
+      "main": [
+        [
+          {
+            "node": "Clear Old Vectors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear Old Vectors": {
+      "main": [
+        [
+          {
+            "node": "Download File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download File": {
+      "main": [
+        [
+          {
+            "node": "Extract Document Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Document Text": {
+      "main": [
+        [
+          {
+            "node": "Guidelines Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Ollama": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Guidelines Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Guidelines Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a5d3b73e-afd9-487a-8968-08fc9c6ebd95",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a7e70ce0ebd707518ff1bfe0eee8619bac57c07b7c33d35a74c7e7abde2ed176"
+  },
+  "id": "vdDsHiF173Jpe233",
+  "tags": []
+}

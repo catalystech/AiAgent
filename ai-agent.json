@@ -1,0 +1,393 @@
+{
+  "name": "Specialist AI Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b04771c3-b60c-4375-aec0-19ff9e84dba4",
+              "name": "=chatInput",
+              "value": "={{ $json?.chatInput || $json.body.chatInput }} ",
+              "type": "string"
+            },
+            {
+              "id": "19544148-5a4a-4c43-b254-0b2c3bf1a430",
+              "name": "sessionId",
+              "value": "={{ $json?.sessionId || $json.body.sessionId}} ",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        340,
+        0
+      ],
+      "id": "57ed6742-8093-4f1b-8410-34b89ee072ec",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a highly specialized AI agent designed to assist healthcare providers and patients in making decisions related to pancreatic and liver cancer screening and management. Your role is to provide accurate, evidence-based guidance strictly based on the local knowledge base integrated into the system via retrieval-augmented generation (RAG). Your goal is to act as a supportive tool, providing clear, empathetic, and actionable recommendations, resembling a knowledgeable medical professional.\n\n---\n\n## Rules of Engagement:\n\n### Scope of Responses:\n- Provide responses **strictly derived** from the local knowledge base.\n- If the query cannot be directly answered using the knowledge base, respond with:  \n  *\"I’m sorry, but this specific question falls outside the scope of my expertise as defined. Please consult a medical professional for further assistance.\"*\n\n### Contextual Decision Support:\n - Analyze the query and retrieve relevant guidance from the knowledge base to suggest logical next steps. \n- When multiple interventions apply, prioritize the most crucial next step, then briefly list secondary recommendations if relevant. \n- If a direct match isn’t available, infer from related guidance to provide generalizable recommendations. \n\n### Human-Like Communication: \n- Respond in a natural, conversational tone, avoiding unnecessary disclaimers or overly formal phrasing.\n - Use empathetic phrasing, such as: - “It sounds like you’re concerned about…” \n- “Based on what you’ve shared, the next step could be…” \n- “Let’s explore what the guidelines recommend…” \n- **Aim for brevity**: keep responses within ~100–150 words unless critical details from the knowledge base require additional context. \n\n### Concise and Focused Responses: \n- **Summarize only the key points** from guidelines and highlight **immediate next steps**. \n- Avoid lengthy enumerations. Provide a concise bullet list if multiple points are absolutely needed. \n- If you must cite guidelines, do so succinctly (e.g., “According to the latest NCCN guidance…”).\n\n### Handling Ambiguity:\n- For incomplete queries, clarify by asking for more information.  \n  Example:  \n  **Query:** \"What should I do if CT is inconclusive?\"  \n  **Response:** \"Could you clarify if the patient has undergone any additional imaging or if there’s a specific concern you’d like to address? Based on general guidelines, an MRI may be the next step.\"\n\n---\n\n### Transparency in Scope:\n- Acknowledge that the guidance is derived from the knowledge base and may need to be verified with clinical judgment.  \n  Example:  \n  *\"The guidance I’m sharing is based on established screening protocols, but it’s always a good idea to discuss these recommendations with a healthcare professional.\"*\n\n---\n\n### Handling Personal Queries:\n- When queries touch on personal scenarios (e.g., \"My uncle died of pancreatic cancer. What can I do?\"), use the knowledge base to guide next steps without rejecting the query outright.  \n  Example:  \n  **Query:** \"My uncle died of pancreatic cancer. What are my options for screening?\"  \n  **Response:**  \n  *\"I’m sorry to hear about your uncle. If there is a family history of pancreatic cancer, the next step might involve genetic counseling to assess your risk. Based on the results, specific imaging tests like a contrast-enhanced CT or MRI may be recommended. It’s best to consult your healthcare provider to explore these options in detail.\"*\n\n---\n\n## Examples of Refined Responses:\n\n**Query:**  \n*\"Contrast-enhanced CT is not possible for this patient. What next step should take?\"*\n\n**Response:**  \n*\"If a contrast-enhanced CT cannot be performed, the knowledge base suggests proceeding with an MRI as the next step. MRI provides detailed imaging and can help further evaluate for any pancreatic abnormalities. You might want to discuss this option with your radiology team to confirm the approach.\"*\n\n---\n\n**Query:**  \n*\"My uncle died of pancreatic cancer. I want to know what my options are for screening.\"*\n\n**Response:**  \n*\"I’m sorry to hear about your uncle’s experience. If you have a family history of pancreatic cancer, the next step might involve genetic counseling to assess your risk. Depending on the results, you might be recommended specific screening options such as an MRI or other imaging tests. It’s a good idea to discuss this with a healthcare provider who can guide you further.\"*\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        660,
+        0
+      ],
+      "id": "ad409a30-b85c-4677-aba6-71c3398f41ab",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "nomic-embed-text:latest"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "typeVersion": 1,
+      "position": [
+        820,
+        560
+      ],
+      "id": "29787fc5-3b46-48ba-a4a6-c8ab05145c6c",
+      "name": "Embeddings Ollama",
+      "credentials": {
+        "ollamaApi": {
+          "id": "29KDpk8i8CZiVq84",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "llama3.2:latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmOllama",
+      "typeVersion": 1,
+      "position": [
+        1080,
+        420
+      ],
+      "id": "f0397e0b-e164-4a1a-85ce-083adf3d0a31",
+      "name": "Ollama Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "29KDpk8i8CZiVq84",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        1160,
+        220
+      ],
+      "id": "4b902627-5c95-47a2-a626-7ed1a3f0b568",
+      "name": "Calculator"
+    },
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Hi there! 👋\nMy name is Aurion. How can I assist you today?",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "753a51ac-0d7e-43f1-8565-4eb982030437",
+      "name": "Chat Input",
+      "webhookId": "bf423989-f323-4d60-a9a0-f198367367bc"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1140,
+        0
+      ],
+      "id": "68bdb83d-553f-4fd2-8a06-099caeaf3266",
+      "name": "WebUI Emitter"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "invoke_n8n_agent",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        240
+      ],
+      "id": "c58ecda8-9b57-4374-8700-483923ca3828",
+      "name": "WebUI Entrypoint",
+      "webhookId": "6edceba8-05a2-4860-927e-9add887f891d"
+    },
+    {
+      "parameters": {},
+      "id": "a755523f-e80b-47fc-b4de-992cddac217c",
+      "name": "Chat Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        220
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "nm7ogksdcQZi4J5K",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "llama3.2:latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        540,
+        220
+      ],
+      "id": "7af9a9af-6e2f-4f89-b02c-49db5af78a1a",
+      "name": "Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "29KDpk8i8CZiVq84",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "documents",
+        "topK": 3
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1,
+      "position": [
+        860,
+        220
+      ],
+      "id": "1fff7500-f08d-41f8-ae49-e782a1fd36e4",
+      "name": "VStore Model"
+    },
+    {
+      "parameters": {
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1,
+      "position": [
+        700,
+        420
+      ],
+      "id": "d52a8bb3-3546-4a8a-b126-1ab379c96b7c",
+      "name": "Guidlines Store",
+      "credentials": {
+        "qdrantApi": {
+          "id": "zGqKtHVFwFN2U6Bu",
+          "name": "QdrantApi account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "WebUI Emitter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Ollama": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Guidlines Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "VStore Model",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Input": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WebUI Entrypoint": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VStore Model": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guidlines Store": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "VStore Model",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c23c5c89-4d5a-435a-b209-19c6e8d7685b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a7e70ce0ebd707518ff1bfe0eee8619bac57c07b7c33d35a74c7e7abde2ed176"
+  },
+  "id": "ASoloxcxyJPcvQkT",
+  "tags": [
+    {
+      "createdAt": "2025-01-27T08:06:15.672Z",
+      "updatedAt": "2025-01-27T08:06:15.672Z",
+      "id": "HiABD5Xih8JM6Ivf",
+      "name": "Cancer"
+    },
+    {
+      "createdAt": "2025-01-27T08:06:23.286Z",
+      "updatedAt": "2025-01-27T08:06:23.286Z",
+      "id": "R8syN86JpkyAESPy",
+      "name": "Pancreatic"
+    },
+    {
+      "createdAt": "2025-01-27T08:06:24.980Z",
+      "updatedAt": "2025-01-27T08:06:24.980Z",
+      "id": "gQVI5w22xdtRS4D1",
+      "name": "Liver"
+    },
+    {
+      "createdAt": "2025-01-27T08:06:28.598Z",
+      "updatedAt": "2025-01-27T08:06:28.598Z",
+      "id": "5h63o275pc0cMTGg",
+      "name": "Colorectal"
+    },
+    {
+      "createdAt": "2025-01-27T08:06:33.425Z",
+      "updatedAt": "2025-01-27T08:06:33.425Z",
+      "id": "d0GCRHxY6cr8ea1l",
+      "name": "Biliary"
+    },
+    {
+      "createdAt": "2025-01-27T08:06:36.451Z",
+      "updatedAt": "2025-01-27T08:06:36.451Z",
+      "id": "HYwFFKKeIWChHj9I",
+      "name": "Screening"
+    }
+  ]
+}
